@@ -1,30 +1,30 @@
 import streamlit as st
-import google.generativeai as genai
+from openai import OpenAI
 import os
-from PIL import Image
 
-# 1. Page Config
-st.set_page_config(page_title="Hamza AI", page_icon="🤖")
+# 1. Page Setup
+st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖")
 
-# 2. API Key Check
-if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# 2. DeepSeek Setup
+# Streamlit Secrets mein ab API_KEY ka naam 'DEEPSEEK_API_KEY' rakh dein
+if "DEEPSEEK_API_KEY" in st.secrets:
+    client = OpenAI(
+        api_key=st.secrets["DEEPSEEK_API_KEY"],
+        base_url="https://api.deepseek.com" # DeepSeek ka rasta
+    )
 else:
-    st.error("API Key nahi mili! Settings > Secrets check karein.")
+    st.error("Secrets mein DEEPSEEK_API_KEY nahi mili!")
     st.stop()
 
-# 3. Sidebar Setup
+# 3. Sidebar
 with st.sidebar:
-    st.header("Creator")
+    st.header("👤 Creator Details")
     st.write("Master: **Sultan Muhammad Hamza Hameed**")
-    # Photo logic
     if os.path.exists("hamza.jpg.jpeg"):
-        st.image("hamza.jpg.jpeg", caption="Sultan Muhammad Hamza Hameed")
-    elif os.path.exists("hamza.jpg"):
-        st.image("hamza.jpg", caption="Sultan Muhammad Hamza Hameed")
+        st.image("hamza.jpg.jpeg")
 
-# 4. Chat UI
-st.title("🤖 Hamza AI Assistant")
+# 4. Chat Logic
+st.title("🤖 Hamza AI (Powered by DeepSeek)")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -33,7 +33,6 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. Chat Input & Response
 if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -41,10 +40,16 @@ if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
 
     with st.chat_message("assistant"):
         try:
-            # Hum 'gemini-1.5-flash' use kar rahe hain
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are a loyal assistant to Sultan Muhammad Hamza Hameed."},
+                    {"role": "user", "content": prompt}
+                ],
+                stream=False
+            )
+            reply = response.choices[0].message.content
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
             st.error(f"Error: {e}")
