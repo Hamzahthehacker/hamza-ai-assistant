@@ -1,18 +1,18 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import os
 
 # 1. Page Config
 st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖")
 
-# 2. Setup API Key
+# 2. Setup Client with New Library
 if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 else:
     st.error("Secrets mein GEMINI_API_KEY nahi mili!")
     st.stop()
 
-# 3. Sidebar
+# 3. Sidebar Details
 with st.sidebar:
     st.header("👤 Creator Details")
     st.write("Master: **Sultan Muhammad Hamza Hameed**")
@@ -29,25 +29,22 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 4. v1beta Model Implementation
-if prompt := st.chat_input("Hamza bhai, v1beta se poochein..."):
+# 4. New Stable Chat Logic
+if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Hum ne model ka pura path 'models/gemini-1.5-flash' diya hai
-            # Jo v1beta API ke liye standard hai
-            model = genai.GenerativeModel('models/gemini-1.5-flash')
+            # Google GenAI library ka naya tareeqa
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt
+            )
             
-            # Yahan hum explicit model call kar rahe hain
-            response = model.generate_content(prompt)
-            
-            if response.text:
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-            else:
-                st.warning("Model ne response generate nahi kiya, dobara koshish karein.")
+            reply = response.text
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
-            st.error(f"v1beta Error: {e}")
+            st.error(f"Nayi Library Error: {e}")
