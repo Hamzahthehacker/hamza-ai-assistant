@@ -24,7 +24,14 @@ else:
     st.stop()
 
 # 4. Initialize Gemini Client
+# Is line ko check karein
 client = genai.Client(api_key=API_KEY)
+
+# Aur jahan generate_content hai, wahan ye model likhein:
+response = client.models.generate_content(
+    model="gemini-1.5-flash",  # "2.0-flash-exp" ki jagah ye likhein, ye har jagah chalta hai
+    contents=prompt
+)
 
 # 5. Sidebar - Creator Details
 with st.sidebar:
@@ -79,4 +86,5 @@ if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
             st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
             st.error(f"Error: {e}")
+
 
