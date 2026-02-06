@@ -1,50 +1,39 @@
 import streamlit as st
-from google import genai
-import os
+import google.generativeai as genai
 
-# 1. Page Configuration
-st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖")
-
-# 2. Setup Client
+# 1. API Configuration
+# Hamza bhai, yahan hum direct latest stable version use kar rahe hain
 if "GEMINI_API_KEY" in st.secrets:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 else:
-    st.error("Secrets mein GEMINI_API_KEY nahi mili!")
+    st.error("API Key missing in Secrets!")
     st.stop()
 
-# 3. Sidebar
-with st.sidebar:
-    st.header("👤 Creator Details")
-    st.write("Master: **Sultan Muhammad Hamza Hameed**")
-    photo_path = "hamza.jpg.jpeg" if os.path.exists("hamza.jpg.jpeg") else "hamza.jpg"
-    if os.path.exists(photo_path):
-        st.image(photo_path, caption="Hamza Hameed")
-
 st.title("🤖 Hamza AI Assistant")
+st.write("Master: Sultan Muhammad Hamza Hameed")
+
+# 2. Model Initialization
+# Free Tier ke liye 'gemini-1.5-flash' hi asli model hai
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.write(msg["content"])
 
-# 4. Chat Logic with Model Fallback
+# 3. Chat Logic
 if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Hum ne model change kar ke 'gemini-pro' kar diya hai jo stable hai
-            response = client.models.generate_content(
-                model="gemini-pro", 
-                contents=prompt
-            )
-            reply = response.text
-            st.markdown(reply)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
+            # Direct generation without beta prefix
+            response = model.generate_content(prompt)
+            st.write(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"Error: {e}")
-            st.info("Hamza bhai, agar ab bhi error aaye to check karein ke API Key sahi paste hui hai ya nahi.")
