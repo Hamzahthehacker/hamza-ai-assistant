@@ -64,13 +64,13 @@ if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
                 # Agar image upload hai to multimodal response
                 img = Image.open(uploaded_file)
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-2.0-flash-exp",
                     contents=[SYSTEM_PROMPT + "\n\n" + prompt, img]
                 )
             else:
                 # Normal Text Chat
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-2.0-flash-exp",
                     contents=SYSTEM_PROMPT + "\n\n" + prompt
                 )
             
@@ -79,3 +79,4 @@ if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
             st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
             st.error(f"Error: {e}")
+
