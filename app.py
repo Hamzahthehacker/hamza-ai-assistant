@@ -2,29 +2,26 @@ import streamlit as st
 from openai import OpenAI
 import os
 
-# 1. Page Setup
+# 1. Page Config
 st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖")
 
-# 2. DeepSeek Setup
-# Streamlit Secrets mein ab API_KEY ka naam 'DEEPSEEK_API_KEY' rakh dein
-if "DEEPSEEK_API_KEY" in st.secrets:
-    client = OpenAI(
-        api_key=st.secrets["DEEPSEEK_API_KEY"],
-        base_url="https://api.deepseek.com" # DeepSeek ka rasta
-    )
+# 2. OpenAI Setup
+if "OPENAI_API_KEY" in st.secrets:
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 else:
-    st.error("Secrets mein DEEPSEEK_API_KEY nahi mili!")
+    st.error("Secrets mein OPENAI_API_KEY nahi mili!")
     st.stop()
 
 # 3. Sidebar
 with st.sidebar:
     st.header("👤 Creator Details")
     st.write("Master: **Sultan Muhammad Hamza Hameed**")
-    if os.path.exists("hamza.jpg.jpeg"):
-        st.image("hamza.jpg.jpeg")
+    photo_path = "hamza.jpg.jpeg" if os.path.exists("hamza.jpg.jpeg") else "hamza.jpg"
+    if os.path.exists(photo_path):
+        st.image(photo_path)
 
-# 4. Chat Logic
-st.title("🤖 Hamza AI (Powered by DeepSeek)")
+# 4. Chat UI
+st.title("🤖 Hamza AI (OpenAI Powered)")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -41,12 +38,11 @@ if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
     with st.chat_message("assistant"):
         try:
             response = client.chat.completions.create(
-                model="deepseek-chat",
+                model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a loyal assistant to Sultan Muhammad Hamza Hameed."},
+                    {"role": "system", "content": "You are a loyal AI assistant to Sultan Muhammad Hamza Hameed. You speak in Urdu and English mix."},
                     {"role": "user", "content": prompt}
-                ],
-                stream=False
+                ]
             )
             reply = response.choices[0].message.content
             st.markdown(reply)
