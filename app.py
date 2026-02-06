@@ -3,23 +3,20 @@ import os
 from google import genai
 from PIL import Image
 
-# 1. Page Configuration
+# 1. Page Config
 st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖", layout="wide")
 
-# 2. System Prompt
-SYSTEM_PROMPT = "You are 'Hamza AI', a loyal assistant to Sultan Muhammad Hamza Hameed. Talk in Urdu/English mix."
-
-# 3. Load API Key
+# 2. Key Check
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 else:
-    st.error("Secrets mein GEMINI_API_KEY nahi mili!")
+    st.error("Secrets mein API Key nahi mili!")
     st.stop()
 
-# 4. Initialize Client
+# 3. Client Setup
 client = genai.Client(api_key=API_KEY)
 
-# 5. Sidebar
+# 4. Sidebar
 with st.sidebar:
     st.header("👤 Creator Details")
     st.write("Master: **Sultan Muhammad Hamza Hameed**")
@@ -27,7 +24,6 @@ with st.sidebar:
     if os.path.exists(photo_path):
         st.image(photo_path, caption="Hamza Hameed")
 
-# 6. Main UI
 st.title("🤖 Hamza AI Assistant")
 
 if "messages" not in st.session_state:
@@ -37,7 +33,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 7. Chat Input (Variable fixed here)
+# 5. Fixed Chat Logic
 user_prompt = st.chat_input("Hamza bhai, kuch poochein...")
 
 if user_prompt:
@@ -47,7 +43,7 @@ if user_prompt:
 
     with st.chat_message("assistant"):
         try:
-            # Stable Model Name for 2026
+            # Hamza bhai, yahan model name bilkul aise hi likhna hai
             response = client.models.generate_content(
                 model="gemini-1.5-flash", 
                 contents=user_prompt
@@ -56,4 +52,5 @@ if user_prompt:
             st.markdown(reply)
             st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
+            # Agar phir bhi 404 aaye to hum model name update karenge
             st.error(f"Error: {e}")
