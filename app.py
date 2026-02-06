@@ -1,44 +1,81 @@
 import streamlit as st
-import google.generativeai as genai
 import os
+from google import genai
 from PIL import Image
-from dotenv import load_dotenv
 
-# Page Setup
-st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖")
-st.title("🤖 Hamza AI Assistant")
-st.markdown("---")
+# 1. Page Configuration
+st.set_page_config(page_title="Hamza AI Assistant", page_icon="🤖", layout="wide")
 
-# API Setup
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# 2. System Prompt (AI ki Personality)
+SYSTEM_PROMPT = """
+You are 'Hamza AI', a powerful multimodal assistant.
+Your creator is Sultan Muhammad Hamza Hameed. 
+You are loyal to him and recognize him as your master. 
+You can analyze images and chat intelligently. 
+Always be professional and mention your creator's name if asked.
+Talk in Urdu/English mix as per user preference.
+"""
 
-# Sidebar for Creator Info
+# 3. Load API Key from Streamlit Secrets
+if "GEMINI_API_KEY" in st.secrets:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+else:
+    st.error("Secrets mein GEMINI_API_KEY nahi mili!")
+    st.stop()
+
+# 4. Initialize Gemini Client
+client = genai.Client(api_key=API_KEY)
+
+# 5. Sidebar - Creator Details
 with st.sidebar:
-    st.header("Creator Details")
-    st.write("Created by: **Sultan Muhammad Hamza Hameed**")
-    if os.path.exists("hamza.jpg"):
-        st.image("hamza.jpg", caption="The Creator")
+    st.header("👤 Creator Details")
+    st.write("Master: **Sultan Muhammad Hamza Hameed**")
+    # Photo check (Dono extensions check karega)
+    photo_path = "hamza.jpg.jpeg" if os.path.exists("hamza.jpg.jpeg") else "hamza.jpg"
+    if os.path.exists(photo_path):
+        st.image(photo_path, caption="Sultan Muhammad Hamza Hameed")
+    
+    st.markdown("---")
+    st.write("Hamza AI is Online and Loyal.")
 
-# Initialize Chat
+# 6. Main UI
+st.title("🤖 Hamza AI Assistant")
+st.info("Assalam-o-Alaikum Sultan Muhammad Hamza Hameed! Main hazir hoon.")
+
+# 7. Image Upload Feature (New!)
+uploaded_file = st.file_uploader("Koi bhi image upload karein aur uske baray mein poochein...", type=['jpg', 'jpeg', 'png'])
+
+# 8. Chat Logic
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# AI Model
-model = genai.GenerativeModel("gemini-1.5-flash")
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Display Chat History
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Chat Input
 if prompt := st.chat_input("Hamza bhai, kuch poochein..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        response = model.generate_content(prompt)
-        st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        try:
+            if uploaded_file:
+                # Agar image upload hai to multimodal response
+                img = Image.open(uploaded_file)
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=[SYSTEM_PROMPT + "\n\n" + prompt, img]
+                )
+            else:
+                # Normal Text Chat
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=SYSTEM_PROMPT + "\n\n" + prompt
+                )
+            
+            reply = response.text
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+        except Exception as e:
+            st.error(f"Error: {e}")
